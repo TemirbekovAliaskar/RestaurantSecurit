@@ -1,0 +1,16 @@
+app:
+    jwt:
+        secret: Java12
+server:
+    error:
+        include-stacktrace: always
+    port: 8080
+spring:
+    datasource:
+        password: 1234
+        url: jdbc:postgresql://localhost:5432/restaurant
+        username: postgres
+    jpa:
+        hibernate:
+            ddl-auto: create
+        show-sql: true
