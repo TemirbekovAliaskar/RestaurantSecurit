@@ -49,12 +49,12 @@ public class MenuItemAPI {
     public List <MenuSearchResponse> search(@RequestParam String word){
         return menuService.search(word);
     }
-    @Secured({"ADMIN","WAITER"})
+    @Secured({"ADMIN","CHEF","WAITER"})
     @GetMapping("/sort")
     public List <MenuSearchResponse> sort(@RequestParam String word){
         return menuService.sort(word);
     }
-    @Secured({"ADMIN","WAITER"})
+    @Secured({"ADMIN","CHEF","WAITER"})
     @GetMapping("/filter")
     public List <MenuSearchResponse> sort(@RequestParam boolean words){
         return menuService.filter(words);

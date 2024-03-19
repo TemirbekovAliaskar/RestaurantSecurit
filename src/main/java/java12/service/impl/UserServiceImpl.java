@@ -6,10 +6,7 @@ import java12.dto.request.SignInRequest;
 import java12.dto.request.UpdateUserRequest;
 import java12.dto.request.UserRequestChef;
 import java12.dto.request.UserRequestWaiter;
-import java12.dto.response.FindUserResponse;
-import java12.dto.response.GetAllUserResponse;
-import java12.dto.response.SimpleResponse;
-import java12.dto.response.UserResponse;
+import java12.dto.response.*;
 import java12.entity.Restaurant;
 import java12.entity.User;
 import java12.entity.enums.Role;
@@ -23,6 +20,8 @@ import java12.service.UserService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.data.domain.Page;
@@ -81,6 +80,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public SimpleResponse save(UserRequestChef userRequestChef) {
+        getCurrentUser();
            boolean exist = userRepository.existsByEmail(userRequestChef.email());
             if (exist) throw new NotFoundException("Email : " + userRequestChef.email() + "уже существует!");
             User user = new User();
@@ -94,6 +94,7 @@ public class UserServiceImpl implements UserService {
             user.setExperience(userRequestChef.experience());
             userRepository.save(user);
             log.info(" Пользователь регистрировался CHEF !");
+
         return SimpleResponse.builder()
                 .httpStatus(HttpStatus.OK)
                 .message("Successfully !")
@@ -103,6 +104,7 @@ public class UserServiceImpl implements UserService {
 
     @Override @Transactional
     public UserResponse asSign(Long restaurantId, Long userId) {
+        getCurrentUser();
 
         Restaurant restaurant = restaurantRepository.getByID(restaurantId);
         User user = userRepository.getByIdUser(userId);
@@ -128,6 +130,8 @@ public class UserServiceImpl implements UserService {
         boolean matches = passwordEncoder.matches(sign.password(),user.getPassword());
         log.info(" User sign in");
         if (!matches) throw new NotFoundException("Пароль не корректный  !");
+
+
         return SimpleResponse.builder()
                 .httpStatus(HttpStatus.OK)
                 .message("Удачно поступили на на работу вы приняты !")
@@ -137,11 +141,13 @@ public class UserServiceImpl implements UserService {
 
     @Override @Transactional
     public UserResponse update(Long userId, UpdateUserRequest userRequest) {
+        getCurrentUser();
         User user = userRepository.getByIdUser(userId);
         user.setFirstName(userRequest.firstName());
         user.setLastName(userRequest.lastName());
         user.setEmail(userRequest.email());
         user.setPassword(userRequest.password());
+
         return UserResponse.builder()
                 .httpStatus(HttpStatus.OK)
                 .message("Successfully updated !")
@@ -150,6 +156,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public SimpleResponse saveWaiter(UserRequestWaiter userRequestWaiter) {
+        getCurrentUser();
         boolean exist = userRepository.existsByEmail(userRequestWaiter.email());
         if (exist) throw new NotFoundException("Email : " + userRequestWaiter.email() + " уже существует!");
         User user = new User();
@@ -172,6 +179,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserResponse delete(Long userId) {
+        getCurrentUser();
         User user = userRepository.getByIdUser(userId);
         restaurantRepository.deleteByUserId(userId);
         userRepository.delete(user);
@@ -183,6 +191,8 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public List<GetAllUserResponse> getAll(int page, int size) {
+        getCurrentUser();
+
         Pageable pageable = PageRequest.of(page - 1, size);
         Page<User> userPage = userRepository.getAllPage(pageable);
 
@@ -196,5 +206,19 @@ public class UserServiceImpl implements UserService {
             responses.add(response);
         }
         return responses;
+    }
+
+    @Override
+    public UserFindResponse findById(Long userId) {
+getCurrentUser();
+        return userRepository.findByIds(userId);
+    }
+
+    private User getCurrentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User current = userRepository.getByEmail(email);
+        if (current.getRole().equals(Role.ADMIN))
+            return current;
+        else throw new AccessDeniedException("Forbidden 403");
     }
 }

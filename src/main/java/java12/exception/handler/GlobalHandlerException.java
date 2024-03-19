@@ -7,6 +7,7 @@ import java12.exception.NotFoundException;
 import java12.exception.response.ExceptionResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -67,6 +68,17 @@ public class GlobalHandlerException {
                 .httpStatus(HttpStatus.EXPECTATION_FAILED)
                 .exceptionClassName(e.getClass().getSimpleName())
                 .message(e.getMessage())
+                .build();
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    public ExceptionResponse accessDenied(AccessDeniedException accessDeniedException){
+        log.error(accessDeniedException.getMessage());
+        return ExceptionResponse.builder()
+                .httpStatus(HttpStatus.FORBIDDEN)
+                .exceptionClassName(accessDeniedException.getClass().getSimpleName())
+                .message("Доступ запрещен: " + accessDeniedException.getMessage())
                 .build();
     }
 

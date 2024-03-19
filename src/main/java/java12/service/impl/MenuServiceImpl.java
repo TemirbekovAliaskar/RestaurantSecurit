@@ -6,17 +6,18 @@ import java12.dto.response.DefaultResponse;
 import java12.dto.response.MenuResponse;
 import java12.dto.response.MenuSearchResponse;
 import java12.entity.*;
+import java12.entity.enums.Role;
 import java12.exception.FilledException;
-import java12.repository.MenuItemRepository;
-import java12.repository.RestaurantRepository;
-import java12.repository.StopListRepository;
-import java12.repository.SubcategoryRepository;
+import java12.exception.NotFoundException;
+import java12.repository.*;
 import java12.service.MenuService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -30,8 +31,15 @@ public class MenuServiceImpl implements MenuService {
     private final MenuItemRepository menuItemRepository;
     private final SubcategoryRepository subcategoryRepository;
     private final StopListRepository stopListRepository;
+    private final UserRepository userRepository;
     @Override @Transactional
     public DefaultResponse save(Long restId,Long subId,MenuRequest menuRequest) {
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User current = userRepository.getByEmail(email);
+        if (!current.getRole().equals(Role.ADMIN)){
+            throw new AccessDeniedException("Not found !");
+        }
         Restaurant restaurant = restaurantRepository.getByID(restId);
         Subcategory subcategory = subcategoryRepository.getByIds(subId);
         MenuItem menuItem = new MenuItem();
@@ -53,6 +61,13 @@ public class MenuServiceImpl implements MenuService {
 
     @Override @Transactional
     public DefaultResponse update(Long menuId, MenuRequest menuRequest) {
+
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User current = userRepository.getByEmail(email);
+        if (!current.getRole().equals(Role.ADMIN)){
+            throw new AccessDeniedException("Not found !");
+        }
         MenuItem menuItem = menuItemRepository.getByIds(menuId);
         menuItem.setName(menuRequest.name());
         menuItem.setDescription(menuRequest.description());
@@ -66,7 +81,6 @@ public class MenuServiceImpl implements MenuService {
 
     @Override
     public List<MenuResponse> getAll() {
-
         return menuItemRepository.getAll();
     }
 
@@ -77,6 +91,11 @@ public class MenuServiceImpl implements MenuService {
 
     @Override
     public DefaultResponse delete(Long menuId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User current = userRepository.getByEmail(email);
+        if (!current.getRole().equals(Role.ADMIN)){
+            throw new AccessDeniedException("Forbidden !");
+        }
             menuItemRepository.deleteCheck(menuId);
        menuItemRepository.delete(menuItemRepository.getByIds(menuId));
         return DefaultResponse.builder()

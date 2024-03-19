@@ -1,10 +1,7 @@
 package java12.api;
 
 import java12.dto.request.Subcategoryrequest;
-import java12.dto.response.DefaultResponse;
-import java12.dto.response.SubcategoryAll;
-import java12.dto.response.SubcategoryCategoryResponse;
-import java12.dto.response.Subcategoryresponse;
+import java12.dto.response.*;
 import java12.service.CategoryService;
 import java12.service.SubcategoryService;
 import lombok.RequiredArgsConstructor;
@@ -28,13 +25,13 @@ public class SubcategoryAPI {
     public DefaultResponse update(@PathVariable Long subId,@RequestBody Subcategoryrequest subcategoryrequest){
         return subcategoryService.update(subId,subcategoryrequest);
     }
-    @Secured({"ADMIN","CHEF","WAITER"})
+    @Secured({"ADMIN","CHEF"})
 
     @GetMapping("/find/{subId}")
     public Subcategoryresponse findById(@PathVariable Long subId){
         return subcategoryService.findById(subId);
     }
-    @Secured({"ADMIN","CHEF","WAITER"})
+    @Secured({"ADMIN","CHEF"})
 
     @GetMapping("/all/{catId}")
     public List<SubcategoryAll> findAll(@RequestParam int page, @RequestParam int size ,@PathVariable Long catId){
@@ -46,11 +43,17 @@ public class SubcategoryAPI {
         return subcategoryService.delete(subId);
     }
 
-    @Secured({"ADMIN","CHEF","WAITER"})
+    @Secured({"ADMIN","CHEF"})
     @GetMapping("/all")
     public List<SubcategoryCategoryResponse> allCategory(){
         return subcategoryService.getAllCategory();
     }
 
+
+    @Secured({"ADMIN","CHEF"})
+    @GetMapping("/search")
+    public List <SubcategoryCategoryResponse> search(@RequestParam String word){
+        return subcategoryService.search(word);
+    }
 
 }

@@ -15,6 +15,7 @@ import java12.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.hibernate.annotations.Check;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
@@ -41,15 +42,23 @@ public class ChequeServiceImpl implements ChequeService {
     public DefaultResponse save(MenuItemCheckRequest menuItemCheckRequest) {
 
         User currentUser = getCurrentUser();
-        List<Long> menu = new ArrayList<>();
+        List<Long> menuIDs = menuItemCheckRequest.menuItemIds();
 
-        menu.addAll(menuItemCheckRequest.menuItemIds());
-        List<MenuItem> allMenuItems = menuItemRepository.getAllMenuId(menu);
-        for (MenuItem menuItem : allMenuItems) {
-            StopList stoplist = stopListRepository.getByMenuItemId(menuItem.getId());
-            if (stoplist != null && stoplist.getDate().isAfter(LocalDateTime.now().minusMinutes(1))) {
-                throw new FilledException("Позиция " + menuItem.getName() + " уже в стоп-листе более  часов!");
+        menuIDs.addAll(menuItemCheckRequest.menuItemIds());
+        List<MenuItem> allMenuItems = menuItemRepository.getAllMenuId(menuIDs);
+
+        for (Long menuItemId : menuIDs) {
+            boolean exists = allMenuItems.stream().anyMatch(menuItem -> menuItem.getId().equals(menuItemId));
+            if (!exists) {
+                throw new NotFoundException(" Такой id  " + menuItemId + " не найдена в базе данных!");
             }
+        }
+
+        for (MenuItem menuItem : allMenuItems) {
+                StopList stoplist = stopListRepository.getByMenuItemId(menuItem.getId());
+                if (stoplist != null && stoplist.getDate().isAfter(LocalDateTime.now().minusMinutes(1))) {
+                    throw new FilledException("Позиция " + menuItem.getName() + " уже в стоп-листе более  часов!");
+                }
         }
         int total = 0;
         for (MenuItem menuItem : allMenuItems) {
@@ -72,6 +81,13 @@ public class ChequeServiceImpl implements ChequeService {
     @Override
     @Transactional
     public DefaultResponse update(Long cheId, MenuItemCheckRequest checkRequest) {
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User current = userRepository.getByEmail(email);
+        if (!current.getRole().equals(Role.ADMIN)){
+            throw new AccessDeniedException("Forbidden !");
+        }
+
         Cheque cheque = chequeRepository.getByIds(cheId);
 
         List<Long> menu = new ArrayList<>();
@@ -81,13 +97,10 @@ public class ChequeServiceImpl implements ChequeService {
         if (updateMenuId.isEmpty()) {
             throw new NotFoundException("Error !");
         } else {
-            for (MenuItem menuItem : updateMenuId) {
-                if (cheque.getMenuItems().contains(menuItem)) {
-                    cheque.getMenuItems().remove(menuItem);
-                } else cheque.getMenuItems().add(menuItem);
-            }
+
+            cheque.getMenuItems().addAll(updateMenuId);
             int total = 0;
-            for (MenuItem menuItem : updateMenuId) {
+            for (MenuItem menuItem : cheque.getMenuItems()) {
                 total += menuItem.getPrice();
             }
             double service = total * (cheque.procient);
@@ -102,6 +115,12 @@ public class ChequeServiceImpl implements ChequeService {
 
     @Override
     public DefaultResponse delete(Long cheId) {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User current = userRepository.getByEmail(email);
+        if (!current.getRole().equals(Role.ADMIN)){
+            throw new AccessDeniedException("Forbidden !");
+        }
+
         chequeRepository.deleteMenu(cheId);
         chequeRepository.delete(chequeRepository.getByIds(cheId));
         return DefaultResponse.builder()
@@ -112,6 +131,7 @@ public class ChequeServiceImpl implements ChequeService {
 
     @Override
     public List<GetCheckResponse> getAll() {
+        getCurrentUser();
         List<GetCheckResponse> getAll = new ArrayList<>();
         List<Cheque> getCheckResponses = chequeRepository.findAll();
         for (Cheque getCheckRespons : getCheckResponses) {
@@ -122,10 +142,10 @@ public class ChequeServiceImpl implements ChequeService {
 
     @Override
     public GetCheckResponse findCheckById(Long checkId) {
+
+        getCurrentUser();
         ChequeResponse find = chequeRepository.findBY(checkId);
         List<MenuResponse> menuItemResponse = menuItemRepository.checkById(checkId);
-
-
 
         double grandTotal = find.priceTotal() + find.service();
 
@@ -147,8 +167,8 @@ public class ChequeServiceImpl implements ChequeService {
                 total += cheque.getPriceTotal() + cheque.getService();
             }
         }
-        SumCheckResponse sumCheckResponse = new SumCheckResponse();
 
+        SumCheckResponse sumCheckResponse = new SumCheckResponse();
         for (Cheque cheque : cheques) {
             sumCheckResponse.setService(String.valueOf(cheque.getService()));
             sumCheckResponse.setPriceTotal(String.valueOf(cheque.getPriceTotal()));
@@ -163,6 +183,13 @@ public class ChequeServiceImpl implements ChequeService {
 
     @Override
     public ResSumResponse getAverage(Long resId) {
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User current = userRepository.getByEmail(email);
+        if (!current.getRole().equals(Role.ADMIN)){
+            throw new AccessDeniedException("Forbidden !");
+        }
+
         Restaurant restaurant = restaurantRepository.getByID(resId);
         List<Cheque> cheques =  chequeRepository.getAllSumRest(restaurant.getId());
         ResSumResponse response = new ResSumResponse();

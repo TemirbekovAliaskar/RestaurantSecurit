@@ -6,11 +6,16 @@ import java12.dto.response.DefaultResponse;
 import java12.dto.response.StopResponse;
 import java12.entity.MenuItem;
 import java12.entity.StopList;
+import java12.entity.User;
+import java12.entity.enums.Role;
+import java12.exception.ForbiddenException;
 import java12.repository.MenuItemRepository;
 import java12.repository.StopListRepository;
+import java12.repository.UserRepository;
 import java12.service.StopService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
@@ -21,10 +26,12 @@ import java.util.List;
 public class StopListServiceImpl implements StopService {
     private final StopListRepository stopListRepository;
     private final MenuItemRepository menuItemRepository;
+    private final UserRepository userRepository;
 
 
     @Override
     public DefaultResponse save(Long menuId, StopRequest stopRequest) {
+        getCurrentUser();
         MenuItem menu = menuItemRepository.getByIds(menuId);
         if (stopListRepository.existsByMenuItemAndDate(menu, stopRequest.date())) {
             return DefaultResponse.builder()
@@ -48,6 +55,7 @@ public class StopListServiceImpl implements StopService {
 
     @Override @Transactional
     public DefaultResponse update(Long stopId, StopRequest stopRequest) {
+        getCurrentUser();
         StopList stopList =  stopListRepository.getByIds(stopId);
         stopList.setReason(stopRequest.reason());
         stopList.setDate(stopRequest.date());
@@ -63,7 +71,7 @@ public class StopListServiceImpl implements StopService {
     }
     @Override
     public DefaultResponse deleteBy(Long stopId) {
-
+        getCurrentUser();
         stopListRepository.delete(stopListRepository.getByIds(stopId));
         return  DefaultResponse.builder()
                 .httpStatus(HttpStatus.OK)
@@ -74,5 +82,13 @@ public class StopListServiceImpl implements StopService {
     @Override
     public StopResponse findBy(Long stopId) {
         return stopListRepository.getStopId(stopId);
+    }
+
+    private User getCurrentUser() {
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User current = userRepository.getByEmail(email);
+        if (current.getRole().equals(Role.ADMIN) || current.getRole().equals(Role.CHEF))
+            return current;
+        else throw new ForbiddenException("Forbidden 403");
     }
 }

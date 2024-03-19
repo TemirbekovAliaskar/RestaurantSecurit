@@ -21,18 +21,18 @@ public class CategoryAPI {
     public DefaultResponse save(@RequestBody CategoryRequest categoryRequest){
         return categoryService.save(categoryRequest);
     }
-    @Secured({"ADMIN","CHEF","WAITER"})
+    @Secured({"ADMIN","CHEF"})
     @GetMapping("/all")
     public List<CategoryResponse> findAll(){
         return categoryService.findAll();
     }
 
-    @Secured({"ADMIN","CHEF","WAITER"})
+    @Secured({"ADMIN","CHEF"})
     @GetMapping("/find/{catId}")
     public CategoryResponse findById(@PathVariable Long catId){
         return categoryService.findById(catId);
     }
-    @Secured({"ADMIN","CHEF"})
+    @Secured({"ADMIN"})
     @PostMapping("/update/{catId}")
     public DefaultResponse update(@PathVariable Long catId,@RequestBody CategoryRequest categoryRequest){
         return categoryService.update(catId,categoryRequest);

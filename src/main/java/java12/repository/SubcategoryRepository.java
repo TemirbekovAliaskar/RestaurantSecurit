@@ -38,4 +38,7 @@ public interface SubcategoryRepository extends JpaRepository<Subcategory, Long> 
 
     @Query("select s from Subcategory s where s.category.id =:catId")
     Page<Subcategory> getAllPage(Pageable pageable, Long catId);
+
+    @Query("select new java12.dto.response.SubcategoryCategoryResponse(c,s.id,s.name) from Subcategory  s join s.category c WHERE LOWER(s.name) LIKE LOWER(concat('%', :word, '%')) ORDER BY s.name")
+    List<SubcategoryCategoryResponse> search(String word);
 }

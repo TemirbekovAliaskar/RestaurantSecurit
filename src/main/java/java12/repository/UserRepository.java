@@ -2,14 +2,18 @@ package java12.repository;
 
 import java12.dto.response.FindUserResponse;
 import java12.dto.response.GetAllUserResponse;
+import java12.dto.response.UserFindResponse;
 import java12.entity.User;
+import java12.entity.enums.Role;
 import java12.exception.NotFoundException;
+import org.springframework.boot.autoconfigure.quartz.QuartzDataSource;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
@@ -32,4 +36,7 @@ public interface UserRepository extends JpaRepository<User, Long> {
     List<User> getAll();
     @Query("SELECT u FROM User u")
     Page<User> getAllPage(Pageable pageable);
+
+    @Query("select new java12.dto.response.UserFindResponse(u.id,u.firstName,u.lastName,u.dateOfBirth,u.email,u.password,u.phoneNumber,u.role,u.experience) from User u where u.id =:userId")
+    UserFindResponse findByIds(Long userId);
 }

@@ -20,4 +20,6 @@ public interface SubcategoryService {
     DefaultResponse delete(Long subId);
 
     List<SubcategoryCategoryResponse> getAllCategory();
+
+    List<SubcategoryCategoryResponse> search(String word);
 }

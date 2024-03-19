@@ -5,10 +5,7 @@ import java12.dto.request.SignInRequest;
 import java12.dto.request.UpdateUserRequest;
 import java12.dto.request.UserRequestChef;
 import java12.dto.request.UserRequestWaiter;
-import java12.dto.response.FindUserResponse;
-import java12.dto.response.GetAllUserResponse;
-import java12.dto.response.SimpleResponse;
-import java12.dto.response.UserResponse;
+import java12.dto.response.*;
 import java12.repository.UserRepository;
 
 import java.util.List;
@@ -28,4 +25,5 @@ public interface UserService {
 
     List<GetAllUserResponse> getAll(int page, int size);
 
+    UserFindResponse findById(Long userId);
 }

@@ -6,10 +6,7 @@ import java12.dto.request.SignInRequest;
 import java12.dto.request.UpdateUserRequest;
 import java12.dto.request.UserRequestChef;
 import java12.dto.request.UserRequestWaiter;
-import java12.dto.response.FindUserResponse;
-import java12.dto.response.GetAllUserResponse;
-import java12.dto.response.SimpleResponse;
-import java12.dto.response.UserResponse;
+import java12.dto.response.*;
 import java12.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.annotation.Secured;
@@ -23,8 +20,6 @@ import java.util.List;
 @Tag(name = "Auth API")
 public class UserAPI {
     private final UserService userService;
-
-
     @GetMapping
     public SimpleResponse signIn(@RequestBody SignInRequest sign){
        return userService.signIn(sign);
@@ -56,7 +51,6 @@ public class UserAPI {
     }
 
     @Secured("ADMIN")
-
     @PostMapping("/delete/{userId}")
     public UserResponse delete(@PathVariable Long userId){
         return userService.delete(userId);
@@ -69,7 +63,10 @@ public class UserAPI {
         return userService.getAll(page,size);
     }
 
-
-
+    @Secured("ADMIN")
+    @GetMapping("/find/{userId}")
+    public UserFindResponse getById(@PathVariable Long userId){
+        return userService.findById(userId);
+    }
 
 }

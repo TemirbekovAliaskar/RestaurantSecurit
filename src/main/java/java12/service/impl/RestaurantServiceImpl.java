@@ -7,14 +7,18 @@ import java12.dto.response.DefaultResponse;
 import java12.dto.response.RestaurantResponse;
 import java12.entity.Restaurant;
 import java12.entity.User;
+import java12.entity.enums.Role;
 import java12.exception.NotFoundException;
 import java12.repository.RestaurantRepository;
+import java12.repository.UserRepository;
 import java12.service.RestaurantService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -24,9 +28,17 @@ import java.util.List;
 @RequiredArgsConstructor
 public class RestaurantServiceImpl implements RestaurantService {
     private final RestaurantRepository restaurantRepository;
+    private final UserRepository userRepository;
 
     @Override
     public DefaultResponse save(RestaurantRequest request) {
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User current = userRepository.getByEmail(email);
+        if (!current.getRole().equals(Role.ADMIN)){
+            throw new AccessDeniedException("Forbidden !");
+        }
+
         Restaurant restaurant = new Restaurant();
         restaurant.setName(request.name());
         restaurant.setLocation(request.location());
@@ -57,6 +69,13 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     public DefaultResponse delete(Long resId) {
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User current = userRepository.getByEmail(email);
+        if (!current.getRole().equals(Role.ADMIN)){
+            throw new AccessDeniedException("Forbidden !");
+        }
+
         Restaurant restaurant = restaurantRepository.getByID(resId);
         restaurantRepository.deleteUser(resId);
         restaurantRepository.delete(restaurant);
@@ -69,6 +88,13 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     public List<AllRestaurants> allRestaurants(int page, int size) {
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User current = userRepository.getByEmail(email);
+        if (!current.getRole().equals(Role.ADMIN)){
+            throw new AccessDeniedException("Forbidden !");
+        }
+
         Pageable pageable = PageRequest.of(page - 1, size);
         Page<Restaurant> restPage = restaurantRepository.getAllPage(pageable);
 
@@ -106,6 +132,13 @@ public class RestaurantServiceImpl implements RestaurantService {
 
     @Override
     public RestaurantResponse findById(Long id) {
+
+        String email = SecurityContextHolder.getContext().getAuthentication().getName();
+        User current = userRepository.getByEmail(email);
+        if (!current.getRole().equals(Role.ADMIN)){
+            throw new AccessDeniedException("Forbidden !");
+        }
+
         Restaurant restaurant = restaurantRepository.getByID(id);
         RestaurantResponse response = new RestaurantResponse();
         response.setId(restaurant.getId());

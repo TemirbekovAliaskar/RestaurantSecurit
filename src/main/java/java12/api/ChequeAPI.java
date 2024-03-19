@@ -15,8 +15,6 @@ import java.util.List;
 public class ChequeAPI {
 
     private final ChequeService chequeService;
-
-
     @Secured({"ADMIN","WAITER"})
     @PostMapping()
     public DefaultResponse save(@RequestBody MenuItemCheckRequest checkrequest) {
