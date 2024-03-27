@@ -34,7 +34,7 @@ public class ChequeServiceImpl implements ChequeService {
     private final UserRepository userRepository;
     private final RestaurantRepository restaurantRepository;
     private final StopListRepository stopListRepository;
-    private final MenuService menuService;
+
 
 
     @Override
@@ -53,7 +53,6 @@ public class ChequeServiceImpl implements ChequeService {
                 throw new NotFoundException(" Такой id  " + menuItemId + " не найдена в базе данных!");
             }
         }
-
         for (MenuItem menuItem : allMenuItems) {
                 StopList stoplist = stopListRepository.getByMenuItemId(menuItem.getId());
                 if (stoplist != null && stoplist.getDate().isAfter(LocalDateTime.now().minusMinutes(1))) {
@@ -69,8 +68,9 @@ public class ChequeServiceImpl implements ChequeService {
         cheque.setPriceTotal(total);
         cheque.setService(total * cheque.procient);
         cheque.setUser(currentUser);
-        chequeRepository.save(cheque);
         cheque.getMenuItems().addAll(allMenuItems);
+        chequeRepository.save(cheque);
+
 
         return DefaultResponse.builder()
                 .httpStatus(HttpStatus.OK)
@@ -144,8 +144,9 @@ public class ChequeServiceImpl implements ChequeService {
     public GetCheckResponse findCheckById(Long checkId) {
 
         getCurrentUser();
+        chequeRepository.getByIds(checkId);
         ChequeResponse find = chequeRepository.findBY(checkId);
-        List<MenuResponse> menuItemResponse = menuItemRepository.checkById(checkId);
+        List<MenuResponse> menuItemResponse = menuItemRepository.checkByIds(checkId);
 
         double grandTotal = find.priceTotal() + find.service();
 
@@ -160,20 +161,29 @@ public class ChequeServiceImpl implements ChequeService {
     @Override
     public SumCheckResponse sumWaiter() {
         User currentUser = getCurrentUser();
-        List<Cheque> cheques =  chequeRepository.getAllSum(currentUser.getId());
+        List<Cheque> cheques = chequeRepository.getAllSum(currentUser);
+
         double total = 0;
+        double totalPrice = 0;
+        double totalService = 0;
+        double totalProcient = 0;
+
         for (Cheque cheque : cheques) {
             if (cheque.getCreatedAt().isAfter(ZonedDateTime.now().minusHours(24))) {
-                total += cheque.getPriceTotal() + cheque.getService();
+                if (currentUser.getId().equals(cheque.getUser().getId())) {
+                    totalPrice += cheque.getPriceTotal();
+                    totalService += cheque.getService();
+                    totalProcient = cheque.getProcient();
+                }
             }
         }
 
+        total = totalPrice + totalService;
+
         SumCheckResponse sumCheckResponse = new SumCheckResponse();
-        for (Cheque cheque : cheques) {
-            sumCheckResponse.setService(String.valueOf(cheque.getService()));
-            sumCheckResponse.setPriceTotal(String.valueOf(cheque.getPriceTotal()));
-            sumCheckResponse.setProcient(cheque.procient);
-        }
+        sumCheckResponse.setService(String.valueOf(totalService));
+        sumCheckResponse.setPriceTotal(String.valueOf(totalPrice));
+        sumCheckResponse.setProcient(totalProcient);
         sumCheckResponse.setFirstName(currentUser.getFirstName());
         sumCheckResponse.setRole(currentUser.getRole());
         sumCheckResponse.setFullTotal(String.valueOf(total));
@@ -196,16 +206,20 @@ public class ChequeServiceImpl implements ChequeService {
 
 
         double totalAverage = 0;
+        double priceTotals = 0;
+        double service = 0;
         for (Cheque cheque : cheques) {
             if (cheque.getCreatedAt().isAfter(ZonedDateTime.now().minusHours(24))) {
-                totalAverage += (cheque.getPriceTotal() + cheque.getService()) / 2;
+                totalAverage += (cheque.getPriceTotal() + cheque.getService());
+                priceTotals += cheque.getPriceTotal();
+                service += cheque.getService();
+
             }
         }
 
-        for (Cheque cheque : cheques) {
-            response.setPriceTotal(String.valueOf(cheque.getPriceTotal()));
-            response.setService(String.valueOf(cheque.getService()));
-        }
+            response.setPriceTotal(String.valueOf(priceTotals));
+            response.setService(String.valueOf(service));
+
         response.setName(restaurant.getName());
         response.setAverageTotal(String.valueOf(totalAverage));
 

@@ -26,7 +26,7 @@ public class MenuItemAPI {
     }
     @Secured({"ADMIN"})
     @PostMapping("/update/{menuId}")
-    public DefaultResponse update(@PathVariable Long menuId,@RequestBody MenuRequest menuRequest){
+    public DefaultResponse update(@PathVariable Long menuId,@RequestBody @Valid MenuRequest menuRequest){
         return menuService.update(menuId,menuRequest);
     }
     @Secured({"ADMIN","CHEF","WAITER"})

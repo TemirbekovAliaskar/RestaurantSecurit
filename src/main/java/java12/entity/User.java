@@ -31,7 +31,7 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Role role;
     private int experience;
-    @OneToMany(mappedBy = "user",cascade = CascadeType.DETACH)
+    @OneToMany(mappedBy = "user",cascade = CascadeType.DETACH,fetch = FetchType.EAGER)
     List<Cheque> cheques;
 
 

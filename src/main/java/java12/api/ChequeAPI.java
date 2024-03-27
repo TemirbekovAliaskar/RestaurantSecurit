@@ -43,7 +43,7 @@ public class ChequeAPI {
         return chequeService.findCheckById(cheId);
     }
 
-    @Secured("ADMIN")
+    @Secured({"ADMIN","WAITER"})
     @GetMapping("/sum")
     public SumCheckResponse getSum(){
         return chequeService.sumWaiter();

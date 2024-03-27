@@ -30,4 +30,18 @@ public interface RestaurantRepository extends JpaRepository<Restaurant, Long> {
 
     @Query("select r from Restaurant r")
     Page<Restaurant> getAllPage(Pageable pageable);
+
+    @Modifying
+    @Transactional
+    @Query("delete from MenuItem m where m.restaurant.id=:resId")
+    void getByMenu(Long resId);
+
+    @Modifying
+    @Transactional
+    @Query(value = "delete from cheques_menu_items where menu_items_id in (select id from menu_item where restaurant_id = :resId)", nativeQuery = true)
+    void getByCheck(Long resId);
+    @Modifying
+    @Transactional
+    @Query("delete from StopList s where s.menuItem.id =:resId")
+    void getByStopList(Long resId);
 }

@@ -22,6 +22,6 @@ import java.util.List;
 public class GetAllUserResponse{
     private int page;
     private int size;
-    private List<User> users;
+    private List<UserFindResponse> users;
 
 }

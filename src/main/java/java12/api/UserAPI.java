@@ -1,26 +1,26 @@
-package java12.api;
+    package java12.api;
 
-import io.swagger.v3.oas.annotations.tags.Tag;
-import jakarta.validation.Valid;
-import java12.dto.request.SignInRequest;
-import java12.dto.request.UpdateUserRequest;
-import java12.dto.request.UserRequestChef;
-import java12.dto.request.UserRequestWaiter;
-import java12.dto.response.*;
-import java12.service.UserService;
-import lombok.RequiredArgsConstructor;
-import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.*;
+    import io.swagger.v3.oas.annotations.tags.Tag;
+    import jakarta.validation.Valid;
+    import java12.dto.request.SignInRequest;
+    import java12.dto.request.UpdateUserRequest;
+    import java12.dto.request.UserRequestChef;
+    import java12.dto.request.UserRequestWaiter;
+    import java12.dto.response.*;
+    import java12.service.UserService;
+    import lombok.RequiredArgsConstructor;
+    import org.springframework.security.access.annotation.Secured;
+    import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+    import java.util.List;
 
-@RestController
-@RequiredArgsConstructor
-@RequestMapping("/api")
-@Tag(name = "Auth API")
-public class UserAPI {
-    private final UserService userService;
-    @GetMapping
+    @RestController
+    @RequiredArgsConstructor
+    @RequestMapping("/api")
+    @Tag(name = "Auth API")
+    public class UserAPI {
+        private final UserService userService;
+        @GetMapping
     public SimpleResponse signIn(@RequestBody SignInRequest sign){
        return userService.signIn(sign);
     }

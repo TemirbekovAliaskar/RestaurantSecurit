@@ -68,6 +68,7 @@ public class RestaurantServiceImpl implements RestaurantService {
     }
 
     @Override
+    @Transactional
     public DefaultResponse delete(Long resId) {
 
         String email = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -75,6 +76,10 @@ public class RestaurantServiceImpl implements RestaurantService {
         if (!current.getRole().equals(Role.ADMIN)){
             throw new AccessDeniedException("Forbidden !");
         }
+
+        restaurantRepository.getByStopList(resId);
+        restaurantRepository.getByCheck(resId);
+        restaurantRepository.getByMenu(resId);
 
         Restaurant restaurant = restaurantRepository.getByID(resId);
         restaurantRepository.deleteUser(resId);

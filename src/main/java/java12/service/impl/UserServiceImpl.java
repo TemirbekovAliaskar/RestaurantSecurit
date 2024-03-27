@@ -29,6 +29,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 
+import java.time.LocalDate;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -43,10 +44,10 @@ public class UserServiceImpl implements UserService {
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
 
-    @PostConstruct
-    public  void  saveAdmin(){
+//    @PostConstruct
+    public  void  saveAdmin() {
 
-        String encode  = passwordEncoder.encode("urmat12");
+        String encode = passwordEncoder.encode("urmat12");
         User admin = User
                 .builder()
                 .firstName("Urmat")
@@ -74,10 +75,7 @@ public class UserServiceImpl implements UserService {
         restaurant.setNumberOfEmployees(restaurant.getUsers().size());
         restaurantRepository.save(restaurant);
 
-
-
     }
-
     @Override
     public SimpleResponse save(UserRequestChef userRequestChef) {
         getCurrentUser();
@@ -116,8 +114,6 @@ public class UserServiceImpl implements UserService {
         }
             restaurant.getUsers().add(user);
             restaurant.setNumberOfEmployees(restaurant.getUsers().size());
-
-
         return UserResponse.builder()
                 .httpStatus(HttpStatus.OK)
                 .message(" Поздравляю вы уже сотрудник ресторана !")
@@ -142,11 +138,13 @@ public class UserServiceImpl implements UserService {
     @Override @Transactional
     public UserResponse update(Long userId, UpdateUserRequest userRequest) {
         getCurrentUser();
+        boolean exist = userRepository.existsByEmail(userRequest.email());
+        if (exist) throw new NotFoundException("Email : " + userRequest.email() + "уже существует!");
         User user = userRepository.getByIdUser(userId);
         user.setFirstName(userRequest.firstName());
         user.setLastName(userRequest.lastName());
         user.setEmail(userRequest.email());
-        user.setPassword(userRequest.password());
+        user.setPassword(passwordEncoder.encode(userRequest.password()));
 
         return UserResponse.builder()
                 .httpStatus(HttpStatus.OK)
@@ -195,13 +193,12 @@ public class UserServiceImpl implements UserService {
 
         Pageable pageable = PageRequest.of(page - 1, size);
         Page<User> userPage = userRepository.getAllPage(pageable);
-
         List<GetAllUserResponse> responses = new ArrayList<>();
         for (User user : userPage.getContent()) {
             GetAllUserResponse response = GetAllUserResponse.builder()
                     .page(userPage.getNumber() + 1)
                     .size(userPage.getTotalPages())
-                    .users(Collections.singletonList(user))
+                    .users(Collections.singletonList(new UserFindResponse(user.getId(), user.getFirstName(), user.getLastName(), user.getDateOfBirth(),user.getEmail(),user.getPassword(),user.getPhoneNumber(),user.getRole(),user.getExperience())))
                     .build();
             responses.add(response);
         }

@@ -20,10 +20,10 @@ public interface MenuItemRepository extends JpaRepository<MenuItem, Long> {
      default MenuItem getByIds(Long menuId){
          return findById(menuId).orElseThrow(() -> new NotFoundException(" Нет такой id " + menuId));
      }
-    @Query("SELECT new java12.dto.response.MenuResponse(m.name, m.price, m.description, m.isVegetarian) FROM MenuItem m")
+    @Query("SELECT new java12.dto.response.MenuResponse(m.id,m.name, m.price, m.description, m.isVegetarian) FROM MenuItem m")
     List<MenuResponse> getAll();
 
-    @Query("SELECT new java12.dto.response.MenuResponse(m.name, m.price, m.description, m.isVegetarian) FROM MenuItem m where m.id =:menuId")
+    @Query("SELECT new java12.dto.response.MenuResponse(m.id,m.name, m.price, m.description, m.isVegetarian) FROM MenuItem m where m.id =:menuId")
     MenuResponse findByIds(Long menuId);
 
     @Query("SELECT new java12.dto.response.MenuSearchResponse(s, m.name, m.price, m.description, m.isVegetarian) FROM MenuItem m JOIN m.subcategories s WHERE LOWER(m.name) LIKE LOWER(concat('%', :word, '%')) ORDER BY m.name")
@@ -36,9 +36,9 @@ public interface MenuItemRepository extends JpaRepository<MenuItem, Long> {
     @Query("select m from MenuItem m where m.id in (:menu)")
     List<MenuItem> getAllMenuId(List<Long> menu);
 
-    @Query("SELECT new java12.dto.response.MenuResponse(m.name, m.price, m.description, m.isVegetarian)" +
-            " FROM MenuItem m join  m.restaurant r join r.users u join u.cheques c where  c.id =:checkId")
-     List<MenuResponse> checkById(Long checkId);
+//    @Query("SELECT new java12.dto.response.MenuResponse(m.name, m.price, m.description, m.isVegetarian)" +
+//            " FROM MenuItem m join cheques_menu_items ")
+//     List<MenuResponse> checkById(Long checkId);
 
     @Modifying
     @Transactional
@@ -51,4 +51,8 @@ public interface MenuItemRepository extends JpaRepository<MenuItem, Long> {
     @Modifying
     @Query("delete from MenuItem m where m.subcategories.id = :subId")
     void removeBySubCategoryId(Long subId);
+
+
+    @Query("select new java12.dto.response.MenuResponse(m.id,m.name,m.price,m.description,m.isVegetarian )from MenuItem m where m.id=:checkId")
+    List<MenuResponse> checkByIds(Long checkId);
 }

@@ -48,10 +48,11 @@ public class SubcategoryServiceImpl implements SubcategoryService {
     @Override
     public List<SubcategoryAll> findAll(Integer page,Integer size,Long catId) {
 
-        getCurrentUser();
+        User currentUser = getCurrentUser();
 
         Pageable pageable = PageRequest.of(page - 1, size);
         Page<Subcategory> subcategoryPage = subcategoryRepository.getAllPage(pageable,catId);
+        Category category = categoryRepository.getByIds(catId);
 
         List<SubcategoryAll> responses = new ArrayList<>();
 //        List<Subcategory> subcategories = subcategoryRepository.findAllId(catId);
@@ -63,6 +64,7 @@ public class SubcategoryServiceImpl implements SubcategoryService {
 
         for (Subcategory subcategory : subcategoryPage.getContent()) {
             SubcategoryAll subcategoryAll = SubcategoryAll.builder()
+                    .categoryResponse(new CategoryResponse(category.getId(),category.getName()))
                     .page(subcategoryPage.getNumber()+1)
                     .size(subcategoryPage.getTotalPages())
                     .id(subcategory.getId())
